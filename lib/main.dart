@@ -1,9 +1,12 @@
 // import 'dart:convert';
 import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:tflite_v2/tflite_v2.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
+import 'package:html/parser.dart';
 
 void main() {
   runApp(MyApp());
@@ -27,30 +30,8 @@ class _ImagePickerDemoState extends State<ImagePickerDemo> {
   final ImagePicker _picker = ImagePicker();
   XFile? _image;
   File? file;
-  var _prediction = "";
+  var result= "";
   // var dataList = [];
-
-  @override
-  void initState() {
-    super.initState();
-    loadModel().then((value) {
-      setState(() {});
-    });
-  }
-
-  loadModel() async {
-    try {
-      print('Loading model...');
-      await Tflite.loadModel(
-        model: "assets/model_unquant.tflite",
-        labels: "assets/labels.txt",
-      );
-      print('Model loaded successfully');
-    } catch (e) {
-      print('Error loading model: $e');
-    }
-  }
-
 
   Future<void> _pickImage() async {
     try {
@@ -66,32 +47,33 @@ class _ImagePickerDemoState extends State<ImagePickerDemo> {
     print('Image picked successfully: $_image');
   }
 
-  Future<void> classifyImage(File image) async {
-    int startTime = DateTime.now().millisecondsSinceEpoch;
-    var recognitions = await Tflite.runModelOnImage(
-      path: image.path,
-      numResults: 6,
-      threshold: 0.05,
-      imageMean: 127.5,
-      imageStd: 127.5,
-    );
+  Future classifyImage(File image) async {
+    final uri = Uri.parse(
+        'https://cat-dog-classifier-using-flask-xisi3zlsna-el.a.run.app/upload');
 
-    setState(() {
-      _prediction = parsePrediction(recognitions!);
-    });
+    var request = http.MultipartRequest('POST', uri);
+    String mimeType = lookupMimeType(image.path) ?? 'application/octet-stream';
+    var mimeTypeData = mimeType.split('/');
+    request.files.add(await http.MultipartFile.fromPath(
+      'photo',
+      image.path,
+      contentType: MediaType(mimeTypeData[0], mimeTypeData[1]),
+    ));
 
-    int endTime = DateTime.now().millisecondsSinceEpoch;
-    print("Inference took ${endTime - startTime}ms");
+    var response = await request.send();
+
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      setState(() {
+        result = responseBody;
+      });
+    } else {
+      setState(() {
+        result = 'Failed to upload image';
+      });
+    }
   }
 
-  String parsePrediction(List<dynamic> recognitions) {
-    // Assuming the first label is for cat and the second is for dog
-    print('Recognitions: $recognitions');
-    String label = recognitions.isNotEmpty ? recognitions[0]['label'] : 'Unknown';
-    return label;
-
-
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +100,7 @@ class _ImagePickerDemoState extends State<ImagePickerDemo> {
               child: Text('Pick Image from Gallery'),
             ),
             SizedBox(height: 20),
-            Text('Prediction: $_prediction'),
+            Text(parse(result).body?.text ?? ''),
           ],
         ),
       ),
