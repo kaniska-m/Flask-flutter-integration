@@ -1,16 +1,30 @@
-# classifier
+# Flask-Flutter-Integration
 
-A new Flutter project.
+This project integrates a Flutter app with a Flask web service, both running in Docker containers. The Flutter app runs locally, while the Flask service is hosted on Google Cloud.
 
-## Getting Started
+## Workflow:
+1. The Flutter app runs in Android Studio.
+2. A user selects an image for classification within the app.
+3. The image is sent to the Flask service, which performs the classification.
+4. The classification result is sent back to the Flutter app.
+5. The result is displayed in the Flutter app.
 
-This project is a starting point for a Flutter application.
+## Deployment
+The trained model is deployed as part of the Flask service. When an image is received from the Flutter app, the Flask service processes the image and uses the model to predict whether the image is of a cat or a dog. The result is then sent back to the Flutter app.
 
-A few resources to get you started if this is your first Flutter project:
+## Running the Project
+### Prerequisites
+  i) Docker installed on your local machine.
+ ii) Android Studio installed for running the Flutter app.
+iii) A Google Cloud account for hosting the Flask service.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Using the App
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Select an Image: 
+Open the Flutter app and select an image from your device.
+
+### Send Image for Classification:
+The app will send the selected image to the Flask service.
+
+### View the Result:
+The classification result (cat or dog) will be displayed in the app.
